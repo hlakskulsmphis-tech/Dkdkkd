@@ -1,0 +1,134 @@
+-- ==================== MM2 RAYFIELD HUB [ULTIMATE EDITION - AGGRESSIVE FLING] ====================
+local Success, Rayfield = pcall(function()
+    return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+end)
+
+if not Success or not Rayfield then
+    warn("[MM2 Hub Error] ไม่สามารถโหลด Rayfield UI ได้")
+    return
+end
+
+local Window = Rayfield:CreateWindow({
+   Name = "MM2 Ultimate Rayfield Hub | Fling Update",
+   LoadingTitle = "กำลังโหลดระบบ Fling ขั้นเทพ...",
+   LoadingSubtitle = "Aggressive Fling Mode",
+   ConfigurationSaving = { Enabled = false },
+   Discord = { Enabled = false },
+   KeySystem = false
+})
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+-- Fling Function (ปรับปรุงให้แรงขึ้นและก้าวร้าว)
+local function flingPlayer(target)
+    if not target or target == LocalPlayer then return end
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local targetChar = target.Character
+    local targetHrp = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+
+    if hrp and targetHrp and hum then
+        local originalCFrame = hrp.CFrame
+        hum.PlatformStand = true
+        
+        -- Loop ก่อกวนฟิสิกส์ให้กระเด็นแบบรุนแรง
+        local connection
+        connection = RunService.Heartbeat:Connect(function()
+            if targetHrp and targetHrp.Parent then
+                hrp.CFrame = targetHrp.CFrame * CFrame.new(0, 0, 0)
+                hrp.AssemblyLinearVelocity = Vector3.new(100000, 100000, 100000)
+                hrp.AssemblyAngularVelocity = Vector3.new(100000, 100000, 100000)
+            else
+                connection:Disconnect()
+            end
+        end)
+
+        task.wait(0.6) -- ระยะเวลาในการซัด
+        connection:Disconnect()
+        
+        hum.PlatformStand = false
+        hrp.CFrame = originalCFrame
+        Rayfield:Notify({Title = "สำเร็จ!", Content = "ซัด " .. target.Name .. " เรียบร้อย!", Duration = 2})
+    end
+end
+
+-- Function หา Roles
+local function getRole(player)
+   if not player or not player.Character then return "Innocent" end
+   local backpack = player:FindFirstChild("Backpack")
+   local char = player.Character
+   local hasKnife = char:FindFirstChild("Knife") or (backpack and backpack:FindFirstChild("Knife"))
+   local hasGun = char:FindFirstChild("Gun") or (backpack and backpack:FindFirstChild("Gun"))
+   if hasKnife then return "Murderer" end
+   if hasGun then return "Sheriff" end
+   return "Innocent"
+end
+
+-- TABS
+local PlayerTab = Window:CreateTab("Players & Fling", 4483362458)
+
+-- ปุ่ม Fling
+PlayerTab:CreateButton({
+   Name = "💥 ซัดฆาตกร (Fling Murderer)",
+   Callback = function()
+      local found = false
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and getRole(p) == "Murderer" then
+            flingPlayer(p)
+            found = true
+            break
+         end
+      end
+      if not found then Rayfield:Notify({Title = "แจ้งเตือน", Content = "ไม่พบฆาตกร!", Duration = 2}) end
+   end,
+})
+
+PlayerTab:CreateButton({
+   Name = "🔫 ซัดนายอำเภอ (Fling Sheriff)",
+   Callback = function()
+      local found = false
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer and getRole(p) == "Sheriff" then
+            flingPlayer(p)
+            found = true
+            break
+         end
+      end
+      if not found then Rayfield:Notify({Title = "แจ้งเตือน", Content = "ไม่พบนายอำเภอ!", Duration = 2}) end
+   end,
+})
+
+PlayerTab:CreateSection("เลือกผู้เล่นเพื่อซัด")
+local SelectedPlayerName = ""
+local PlayerDropdown = PlayerTab:CreateDropdown({
+   Name = "เลือกผู้เล่น",
+   Options = {},
+   Callback = function(Option) SelectedPlayerName = Option end,
+})
+
+-- รีเฟรชรายชื่อ
+PlayerTab:CreateButton({
+   Name = "🔄 รีเฟรชรายชื่อ",
+   Callback = function()
+      local list = {}
+      for _, p in pairs(Players:GetPlayers()) do
+         if p ~= LocalPlayer then table.insert(list, p.Name) end
+      end
+      PlayerDropdown:Refresh(list)
+   end,
+})
+
+PlayerTab:CreateButton({
+   Name = "💥 ซัดผู้เล่นที่เลือก",
+   Callback = function()
+      local target = Players:FindFirstChild(SelectedPlayerName)
+      if target then flingPlayer(target) else Rayfield:Notify({Title = "ข้อผิดพลาด", Content = "กรุณาเลือกผู้เล่นก่อน", Duration = 2}) end
+   end,
+})
+
+print("[MM2 Hub] โหลดระบบ Fling ใหม่สำเร็จ!")
